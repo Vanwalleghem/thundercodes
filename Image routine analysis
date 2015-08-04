@@ -3,191 +3,97 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure, show, axes, sci
 from matplotlib import cm, colors
-from thunder import KMeans, NMF, PCA, RegressionModel, Colorize, Registration
+from thunder import KMeans, NMF, PCA, RegressionModel, Colorize
 import numpy as np
 import scipy.io
+import math
 from numpy import amin, amax, ravel, sum, outer, inner, mean, shape, dot, transpose, concatenate, ones, asarray
 image = Colorize.image
 sns.set_context('notebook')
 sns.set_style('ticks')
 plt.ioff()
 
-def center(m):
-    y = m.copy()
-    y[y>0] = y[y>0]/max(y[y>0])
-    y[y<0] = y[y<0]/-min(y[y<0])
-    return y
 
-
-def analysis( RDD,int,array ):
+def analysis( norm,dirnumber,directory,stimparam ):
       
-# 	modelK=KMeans(k=30).fit(norm)
-# 	newclrs = Colorize.optimize(modelK.centers, asCmap=True)
-# 	sns.set_style('darkgrid')
-# 	plt.gca().set_color_cycle(newclrs.colors)
-# 	plt.plot(modelK.centers.T)
-# 	plt.savefig('/mnt/downloads/temp/Kmeans30-'+str(int)+'.png', dpi=300, bbox_inches='tight')
-
-# 	imgLabels = modelK.predict(norm).pack()
-# 	sim = modelK.similarity(norm)
-# 	imgSim = sim.pack()
-# 	brainmap = Colorize(cmap=newclrs).transform(imgLabels, mask=imgSim)
-# 	sns.set_style('white')
-# 	plt.plot(brainmap)
-# 	plt.savefig('/mnt/downloads/temp/Kmeans30b-'+str(int)+'.png', dpi=300, bbox_inches='tight')
-
-# 	fig = figure(dpi=300)
-# 	model = NMF(k=9, maxIter=50).fit(norm)
-# 	plt.plot(model.h.T[:,0:3])
-# 	plt.savefig('/mnt/downloads/temp/NMF-'+str(int)+'-1.png', dpi=300, bbox_inches='tight')
-# 	fig = figure(dpi=300)
-# 	plt.plot(model.h.T[:,3:6])
-# 	plt.savefig('/mnt/downloads/temp/NMF-'+str(int)+'-2.png', dpi=300, bbox_inches='tight')
-# 	fig = figure(dpi=300)
-# 	plt.plot(model.h.T[:,6:9])
-# 	plt.savefig('/mnt/downloads/temp/NMF-'+str(int)+'-3.png', dpi=300, bbox_inches='tight')
-# 	imgs = model.w.pack()
-# 	fig = figure(dpi=300)
-# # 	maps = Colorize(cmap='indexed', colors=[ "blue","green","red"], scale=2).transform(imgs)
-# 	maps = Colorize(cmap='indexed', colors=[ "blue","green","red"], scale=2).transform(imgs[0:3])
-# 	plt.imshow(maps);
-# 	plt.savefig('/mnt/downloads/temp/NMFb-'+str(int)+'-1.png', dpi=300, bbox_inches='tight')
-# 	fig = figure(dpi=300)
-# 	maps = Colorize(cmap='indexed', colors=[ "blue","green","red"], scale=2).transform(imgs[3:6])
-# 	plt.imshow(maps);
-# 	plt.savefig('/mnt/downloads/temp/NMFb-'+str(int)+'-2.png', dpi=300, bbox_inches='tight')
-# 	fig = figure(dpi=300)
-# 	maps = Colorize(cmap='indexed', colors=[ "blue","green","red"], scale=2).transform(imgs[6:9])
-# 	plt.imshow(maps);
-# 	plt.savefig('/mnt/downloads/temp/NMFb-'+str(int)+'-3.png', dpi=300, bbox_inches='tight')
-# 	scipy.io.savemat('/mnt/downloads/temp/NMF-'+str(int)+'.mat', mdict={'W':imgs,'H':model.h.T}, oned_as='column', do_compression='true')
-
-# 	fig = figure(dpi=300)
-# 	model=PCA(k=3).fit(norm)
-# 	plt.plot(model.comps.T);
-# 	plt.savefig('/mnt/downloads/temp/PCA-'+str(int)+'.png', dpi=300, bbox_inches='tight')
-# 	imgs = model.scores.pack()
-# 	fig = figure(dpi=300)
-# 	maps = Colorize(cmap='indexed', colors=[ "blue","green" , "red"], scale=2).transform(imgs)
-# 	plt.imshow(maps);
-# 	plt.savefig('/mnt/downloads/temp/PCAb-'+str(int)+'.png', dpi=300, bbox_inches='tight')
-# 	scipy.io.savemat('/mnt/downloads/temp/PCA-'+str(int)+'.mat', mdict={'comps':model.comps.T,'scores':imgs}, oned_as='column', do_compression='true')
-    
-# 	model = RegressionModel.load(test, "linear")
-# 	results = model.fit(norm)
-# 	betas=results.select('betas').pack()
-# 	fig = figure(dpi=300)
-# 	maps = Colorize(cmap='indexed', colors=[ "red","green", "blue"], scale=2).transform(betas[0:3])
-# 	plt.imshow(maps)
-# 	plt.savefig('/mnt/downloads/temp/linreg-'+str(int)+'.png', dpi=300, bbox_inches='tight')
-# 	if array.shape[0]>3:   
-# 		fig = figure(dpi=300)
-# # 		lower=array.shape[0]-3
-# # 		upper=array.shape[0]        
-# 		maps = Colorize(cmap='indexed', colors=[ "red","green", "blue"], scale=2).transform(betas[3:6])
-# 		plt.imshow(maps)
-# 		plt.savefig('/mnt/downloads/temp/linreg2-'+str(int)+'.png', dpi=300, bbox_inches='tight')
-# 	scipy.io.savemat('/mnt/downloads/temp/linreg-'+str(int)+'.mat', mdict={'betas':betas,'rsq':results.select('stats').pack()}, oned_as='column', do_compression='true')
-# 	vmin = amin(betas)
-# 	vmax = amax(betas)
-# 	fig = figure(dpi=300)
-# 	plt.subplots(2, 3, sharex=True, sharey=True)
-# 	for j in range(0,array.shape[0]):
-# 		n=betas[j,]
-# 		plt.subplot(2, 3, j+1)
-# 		plt.imshow(n, vmin=vmin, vmax=vmax, cmap='jet')
-# 		ax = plt.gca()
-# 		ax.set_xticklabels([])
-# 		ax.set_yticklabels([])
-# 	plt.savefig('/mnt/downloads/temp/linregb-'+str(int)+'.png', dpi=300, bbox_inches='tight')
-# 	fig = figure(dpi=300)
-# 	n=betas[6,]
-# 	plt.imshow(n, vmin=vmin, vmax=vmax, cmap='jet')
-# 	plt.savefig('/mnt/downloads/temp/linregtot-'+str(int)+'.png', dpi=300, bbox_inches='tight')
-    
 	fig = figure(dpi=300)
-	plt.subplots(2, 3, sharex=True, sharey=True)
-	for j in range(0,array.shape[0]):
+	model = NMF(k=18, maxIter=100).fit(norm)
+	plt.plot(model.h.T[:,0:3])
+	plt.savefig('/mnt/downloads/'+directory+'/NMF-'+str(dirnumber)+'-1.png', dpi=300, bbox_inches='tight')
+	fig = figure(dpi=300)
+	plt.plot(model.h.T[:,3:6])
+	plt.savefig('/mnt/downloads/'+directory+'/NMF-'+str(dirnumber)+'-2.png', dpi=300, bbox_inches='tight')
+	fig = figure(dpi=300)
+	plt.plot(model.h.T[:,6:9])
+	plt.savefig('/mnt/downloads/'+directory+'/NMF-'+str(dirnumber)+'-3.png', dpi=300, bbox_inches='tight')
+	fig = figure(dpi=300)
+	plt.plot(model.h.T[:,9:12])
+	plt.savefig('/mnt/downloads/'+directory+'/NMF-'+str(dirnumber)+'-4.png', dpi=300, bbox_inches='tight')
+	fig = figure(dpi=300)
+	plt.plot(model.h.T[:,12:15])
+	plt.savefig('/mnt/downloads/'+directory+'/NMF-'+str(dirnumber)+'-5.png', dpi=300, bbox_inches='tight')
+	fig = figure(dpi=300)
+	plt.plot(model.h.T[:,15:18])
+	plt.savefig('/mnt/downloads/'+directory+'/NMF-'+str(dirnumber)+'-6.png', dpi=300, bbox_inches='tight')
+	imgs = model.w.pack()
+	fig = figure(dpi=300)
+# 	maps = Colorize(cmap='indexed', colors=[ "blue","green","red"], scale=2).transform(imgs)
+	maps = Colorize(cmap='indexed', colors=[ "blue","green","red"], scale=2).transform(imgs[0:3])
+	plt.imshow(maps);
+	plt.savefig('/mnt/downloads/'+directory+'/NMFb-'+str(dirnumber)+'-1.png', dpi=300, bbox_inches='tight')
+	fig = figure(dpi=300)
+	maps = Colorize(cmap='indexed', colors=[ "blue","green","red"], scale=2).transform(imgs[3:6])
+	plt.imshow(maps);
+	plt.savefig('/mnt/downloads/'+directory+'/NMFb-'+str(dirnumber)+'-2.png', dpi=300, bbox_inches='tight')
+	fig = figure(dpi=300)
+	maps = Colorize(cmap='indexed', colors=[ "blue","green","red"], scale=2).transform(imgs[6:9])
+	plt.imshow(maps);
+	plt.savefig('/mnt/downloads/'+directory+'/NMFb-'+str(dirnumber)+'-3.png', dpi=300, bbox_inches='tight')
+	fig = figure(dpi=300)
+	maps = Colorize(cmap='indexed', colors=[ "blue","green","red"], scale=2).transform(imgs[9:12])
+	plt.imshow(maps);
+	plt.savefig('/mnt/downloads/'+directory+'/NMFb-'+str(dirnumber)+'-4.png', dpi=300, bbox_inches='tight')
+	fig = figure(dpi=300)
+	maps = Colorize(cmap='indexed', colors=[ "blue","green","red"], scale=2).transform(imgs[12:15])
+	plt.imshow(maps);
+	plt.savefig('/mnt/downloads/'+directory+'/NMFb-'+str(dirnumber)+'-5.png', dpi=300, bbox_inches='tight')
+	fig = figure(dpi=300)
+	maps = Colorize(cmap='indexed', colors=[ "blue","green","red"], scale=2).transform(imgs[15:18])
+	plt.imshow(maps);
+	plt.savefig('/mnt/downloads/'+directory+'/NMFb-'+str(dirnumber)+'-6.png', dpi=300, bbox_inches='tight')
+	scipy.io.savemat('/mnt/downloads/'+directory+'/NMF-'+str(dirnumber)+'.mat', mdict={'W':imgs,'H':model.h.T}, oned_as='column', do_compression='true')
+
+  
+	yplot=int(math.ceil(float(stimparam.shape[0])/(math.trunc(stimparam.shape[0]**(0.5)))))
+	xplot=math.trunc(stimparam.shape[0]**(0.5))  
+	model = RegressionModel.load(test, "linear")
+	global results
+	results = model.fit(norm)
+	betas=results.select('betas').pack()
+	rsq=results.select('stats').pack()
+	fig = figure(dpi=300)
+	plt.subplots(xplot, yplot, sharex=True, sharey=True)
+	for j in range(0,stimparam.shape[0]):
+		plt.subplot(xplot, yplot, j+1);
+		plt.imshow(betas[j], cmap='RdBu_r')
+		ax = plt.gca()
+		ax.set_xticklabels([])
+		ax.set_yticklabels([])
+	plt.savefig('/mnt/downloads/'+directory+'/linreg-'+str(dirnumber)+'.png', dpi=300, bbox_inches='tight')
+	scipy.io.savemat('/mnt/downloads/'+directory+'/linreg-'+str(dirnumber)+'.mat', mdict={'betas':betas,'rsq':rsq}, oned_as='column', do_compression='true')
+
+	fig = figure(dpi=300)
+	plt.subplots(xplot, yplot, sharex=True, sharey=True)
+	for j in range(0,stimparam.shape[0]):
 		x = test[j]        
 		corrs = norm.correlate(x)
-		corrMat = center(corrs.pack())
-		plt.subplot(2, 3, j+1);
+		corrMat = corrs.pack()
+		plt.subplot(xplot, yplot, j+1);
 		plt.imshow(corrMat, cmap='RdBu_r')
 		ax = plt.gca()
 		ax.set_xticklabels([])
 		ax.set_yticklabels([])
-		scipy.io.savemat('/mnt/downloads/temp/correlation-'+str(i)+'-'+str(j)+'.mat', mdict={'correlation'+str(j)+'':corrs.pack(),'center'+str(j)+'':corrMat}, oned_as='column', do_compression='true')
-	plt.savefig('/mnt/downloads/temp/correlation-'+str(int)+'.png', dpi=300, bbox_inches='tight')
-
+		scipy.io.savemat('/mnt/downloads/'+directory+'/correlation-'+str(i)+'-'+str(j)+'.mat', mdict={'correlation'+str(j)+'':corrMat}, oned_as='column', do_compression='true')
+	plt.savefig('/mnt/downloads/'+directory+'/correlation-'+str(dirnumber)+'.png', dpi=300, bbox_inches='tight')
     
-# 	fig = figure(dpi=300)
-# 	model=KMeans(k=5).fit(norm)
-# 	newclrs = Colorize.optimize(model.centers, asCmap=True)
-# 	plt.gca().set_color_cycle(newclrs.colors)
-# 	plt.plot(model.centers.T);
-# 	plt.savefig('/mnt/downloads/temp/Kmeans5-'+str(int)+'.png', dpi=300, bbox_inches='tight')
-# 	imgLabels = model.predict(norm).pack()
-# 	sim = model.similarity(norm)
-# 	imgSim = sim.pack()
-# 	brainmap = Colorize(cmap=newclrs).transform(imgLabels, mask=imgSim)
-#  	fig = figure(dpi=300)
-# 	image(brainmap)
-# 	plt.savefig('/mnt/downloads/temp/Kmeans5b-'+str(int)+'.png', dpi=300, bbox_inches='tight')
-# 	scipy.io.savemat('/mnt/downloads/temp/Kmeans5-'+str(int)+'.mat', mdict={'similarity':imgSim,'centers':model.centers.T,'predict':imgLabels}, oned_as='column', do_compression='true')
-    
-# 	modelK=KMeans(k=3).fit(norm)
-# 	newclrs = Colorize.optimize(modelK.centers, asCmap=True)
-# 	sns.set_style('darkgrid')
-# 	plt.gca().set_color_cycle(newclrs.colors)
-# 	plt.plot(modelK.centers.T);
-# 	plt.savefig('/mnt/downloads/temp/Kmeans3-'+str(int)+'.png', dpi=300, bbox_inches='tight')
-	
-# 	imgLabels = modelK.predict(norm).pack()
-# 	sim = modelK.similarity(norm)
-# 	imgSim = sim.pack()
-# 	brainmap = Colorize(cmap=newclrs).transform(imgLabels, mask=imgSim)
-# 	sns.set_style('white')
-# 	image(brainmap)
-# 	plt.savefig('/mnt/downloads/temp/Kmeans3b-'+str(int)+'.png', dpi=300, bbox_inches='tight')
 	return
-
-for i in range(121,181):
-	norm = tsc.loadImages('/mnt/downloads/CroppedNeuropilTiffs/'+str(i)+'/', inputFormat='tif')
-	norm = norm.toTimeSeries(size="64M")
-	norm=norm.squelch(100).normalize(baseline='percentile')
-	norm.cache()
-	if 121 <= i <= 180:
-		test = np.zeros((6,360),dtype=np.int)
-		test[0,33:80]=1
-		test[1,93:120]=1
-		test[2,133:152]=1
-		test[3,163:212]=1
-		test[4,256:301]=1
-		test[5,303:342]=1
-		try:        
-			analysis(norm,i,test)
-		except Exception:
-			pass
-		plt.close("all")
-	elif 91 <= i <= 120 :
-		test = np.zeros((6,360),dtype=np.int)
-		test[0,113:152]=1
-		test[1,173:192]=1
-		test[2,213:222]=1
-		test[3,243:302]=1
-		test[4,256:301]=1
-		test[5,23:42]=1
-		try:        
-			analysis(norm,i,test)
-		except Exception:
-			pass
-		plt.close("all")
-# 	elif 31 <= i <= 45:
-# 		test = np.zeros((5,500),dtype=np.int)
-# 		test[0,85:100]=1
-# 		test[1,130:145]=1
-# 		test[2,175:190]=1
-# 		test[3,220:235]=1
-# 		test[4,85:95]=1
-# 		analysis(i,test)
-# 		plt.close("all")
