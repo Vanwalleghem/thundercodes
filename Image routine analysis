@@ -82,18 +82,20 @@ def analysis( norm,dirnumber,directory,stimparam ):
 	plt.savefig('/mnt/downloads/'+directory+'/linreg-'+str(dirnumber)+'.png', dpi=300, bbox_inches='tight')
 	scipy.io.savemat('/mnt/downloads/'+directory+'/linreg-'+str(dirnumber)+'.mat', mdict={'betas':betas,'rsq':rsq}, oned_as='column', do_compression='true')
 
+	corrMat=np.zeros((stimparam.shape[0],norm.dims[0],norm.dims[1]),dtype=np.float64)
+    
 	fig = figure(dpi=300)
 	plt.subplots(xplot, yplot, sharex=True, sharey=True)
 	for j in range(0,stimparam.shape[0]):
 		x = test[j]        
 		corrs = norm.correlate(x)
-		corrMat = corrs.pack()
+		corrMat[j] = corrs.pack()
 		plt.subplot(xplot, yplot, j+1);
-		plt.imshow(corrMat, cmap='RdBu_r')
+		plt.imshow(corrMat[j], cmap='RdBu_r')
 		ax = plt.gca()
 		ax.set_xticklabels([])
 		ax.set_yticklabels([])
-		scipy.io.savemat('/mnt/downloads/'+directory+'/correlation-'+str(i)+'-'+str(j)+'.mat', mdict={'correlation'+str(j)+'':corrMat}, oned_as='column', do_compression='true')
+	scipy.io.savemat('/mnt/downloads/'+directory+'/correlation-'+str(dirnumber)+'.mat', mdict={'correlations':corrMat}, oned_as='column', do_compression='true')
 	plt.savefig('/mnt/downloads/'+directory+'/correlation-'+str(dirnumber)+'.png', dpi=300, bbox_inches='tight')
     
 	return
