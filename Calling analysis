@@ -1,0 +1,9 @@
+directory='0721results'
+for i in range(1,48):
+	norm = tsc.loadImages('/mnt/downloads/0721/'+str(i)+'/', inputFormat='tif')
+	norm.cache()
+	norm = norm.toTimeSeries(size="32M")
+	norm=norm.squelch(800).normalize(baseline='percentile')
+	norm.cache()
+	analysis(norm,i,directory,test)
+	plt.close("all")
