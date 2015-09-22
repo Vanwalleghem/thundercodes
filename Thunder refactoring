@@ -33,9 +33,9 @@ def analysisNMF( norm,dirnumber,directory,stimparam,numcomp=18):
         j+=1
         plt.close("all")
     scipy.io.savemat('/mnt/downloads/'+directory+'/NMF-'+str(dirnumber)+'.mat', mdict={'W':imgs,'H':model.h.T}, oned_as='column', do_compression='true')
-    lst = np.asarray(list(itertools.product([0, 1], repeat=stimparam.shape[0])))
-    NMFH=np.transpose(model.h.T)
     
+    lst = np.asarray(list(itertools.product([0, 1], repeat=stimparam.shape[0])))
+    NMFH=np.transpose(model.h.T)    
     results=[]
     corrMat=np.zeros((shape(NMFH)[0],norm.dims[0],norm.dims[1]),dtype=np.float64)
     for k in range(0,shape(NMFH)[0]):
@@ -108,5 +108,38 @@ def analysisPCA( norm,dirnumber,directory,stimparam,numcomp=30):
         j+=1
         plt.close("all")
     scipy.io.savemat('/mnt/downloads/'+directory+'/PCA-'+str(dirnumber)+'.mat', mdict={'W':imgs,'comps':model.comps.T}, oned_as='column', do_compression='true')
-
+    lst = np.asarray(list(itertools.product([0, 1], repeat=stimparam.shape[0])))
+    PCAcomps=np.transpose(model.comps.T)    
+    results=[]
+    corrMat=np.zeros((shape(PCAcomps)[0],norm.dims[0],norm.dims[1]),dtype=np.float64)
+    for k in range(0,shape(PCAcomps)[0]):
+        result=[]
+        ccr=[]
+        for j in range(1,shape(lst)[0]):
+            combination=np.zeros((1,norm.index.shape[0]),dtype=np.int);
+            for i in np.transpose(np.nonzero(lst[j])[0]):
+                combination+=stimparam[i]
+            cc=np.corrcoef(PCAcomps[k,:],combination)[0]
+            cc=np.delete(cc,0)
+            ccr.append(cc)
+        result.append(ccr[np.argmax(ccr)])
+        result.append(lst[np.argmax(ccr)])
+        results.append(result)
+        combination=np.zeros((1,norm.index.shape[0]),dtype=np.int);
+        for i in np.transpose(np.nonzero(lst[np.argmax(ccr)])[0]):
+            combination+=aud8freq[i]  
+        corrs = norm.correlate(combination)
+        corrMat[k] = corrs.pack()
+        
+    yplot=int(math.ceil(float(shape(corrMat)[0])/(math.trunc(shape(corrMat)[0]**(0.5)))))
+    xplot=math.trunc(shape(corrMat)[0]**(0.5))
+    for j in range(0,corrMat.shape[0]):
+        plt.subplot(xplot, yplot, j+1);
+        plt.imshow(corrMat[j], cmap='RdBu_r')
+        ax = plt.gca()
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
+    scipy.io.savemat('/mnt/downloads/'+directory+'/PCAcorrelation-'+str(dirnumber)+'.mat', mdict={'correlations':corrMat}, oned_as='column', do_compression='true')
+    plt.savefig('/mnt/downloads/'+directory+'/PCAcorrelation-'+str(dirnumber)+'.png', dpi=300, bbox_inches='tight')
+    
     return
