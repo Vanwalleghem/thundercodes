@@ -1,17 +1,19 @@
 %matplotlib inline
+from skimage import feature
+from math import sqrt
+from skimage.morphology import disk, opening
 import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure, show, axes, sci
-from matplotlib import cm, colors
-from thunder import KMeans, NMF, PCA, RegressionModel, Colorize
+from matplotlib import colors
+from thunder import NMF, PCA, RegressionModel, Colorize
 import numpy as np
 import scipy.io
 import math
 import itertools
-from numpy import amin, amax, ravel, sum, outer, inner, mean, shape, dot, transpose, concatenate, ones, asarray
 image = Colorize.image
 from scipy import signal
-window = signal.gaussian(11, std=3)
+window = signal.gaussian(5, std=1)
 sns.set_context('notebook')
 sns.set_style('ticks')
 plt.ioff()
@@ -56,6 +58,12 @@ def analysisNMF( norm,dirnumber,directory,stimparam,numcomp=18):
             combination+=aud8freq[i]  
         corrs = norm.correlate(combination)
         corrMat[k] = corrs.pack()
+    with open('/mnt/downloads/temp/NMFCorrCoef-'+str(dirnumber)+'.txt', 'w') as outfile:
+        i=1
+        for data_slice in test:
+            outfile.write ('NMF-'+str(i)+' CorrCoef' + np.array_str(data_slice[0]).rjust(10) +'Combination of features'+ np.array_str(data_slice[1]))
+            outfile.write('\n')
+            i+=1
         
     yplot=int(math.ceil(float(shape(corrMat)[0])/(math.trunc(shape(corrMat)[0]**(0.5)))))
     xplot=math.trunc(shape(corrMat)[0]**(0.5))
@@ -130,7 +138,14 @@ def analysisPCA( norm,dirnumber,directory,stimparam,numcomp=30):
             combination+=aud8freq[i]  
         corrs = norm.correlate(combination)
         corrMat[k] = corrs.pack()
-        
+    with open('/mnt/downloads/temp/PCACorrCoef-'+str(dirnumber)+'.txt', 'w') as outfile:
+        i=1
+        for data_slice in test:
+            outfile.write ('NMF-'+str(i)+' CorrCoef' + np.array_str(data_slice[0]).rjust(10) +'Combination of features'+ np.array_str(data_slice[1]))
+            outfile.write('\n')
+            i+=1
+      
+    
     yplot=int(math.ceil(float(shape(corrMat)[0])/(math.trunc(shape(corrMat)[0]**(0.5)))))
     xplot=math.trunc(shape(corrMat)[0]**(0.5))
     for j in range(0,corrMat.shape[0]):
