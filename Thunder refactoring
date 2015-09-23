@@ -18,8 +18,8 @@ sns.set_context('notebook')
 sns.set_style('ticks')
 plt.ioff()
 
-def analysisNMF( norm,dirnumber,directory,stimparam,numcomp=18):
-      
+def analysisNMF( norm,dirnumber,directory,stimparam,numcomp=18,min_radius=3,max_radius=7,radius=4):
+    selem = disk(radius)  
     fig = figure(dpi=300)
     model = NMF(k=numcomp, maxIter=100).fit(norm)
     j=1
@@ -60,7 +60,7 @@ def analysisNMF( norm,dirnumber,directory,stimparam,numcomp=18):
         corrMat[k] = corrs.pack()
     with open('/mnt/downloads/temp/NMFCorrCoef-'+str(dirnumber)+'.txt', 'w') as outfile:
         i=1
-        for data_slice in test:
+        for data_slice in results:
             outfile.write ('NMF-'+str(i)+' CorrCoef' + np.array_str(data_slice[0]).rjust(10) +'Combination of features'+ np.array_str(data_slice[1]))
             outfile.write('\n')
             i+=1
@@ -140,7 +140,7 @@ def analysisPCA( norm,dirnumber,directory,stimparam,numcomp=30):
         corrMat[k] = corrs.pack()
     with open('/mnt/downloads/temp/PCACorrCoef-'+str(dirnumber)+'.txt', 'w') as outfile:
         i=1
-        for data_slice in test:
+        for data_slice in results:
             outfile.write ('NMF-'+str(i)+' CorrCoef' + np.array_str(data_slice[0]).rjust(10) +'Combination of features'+ np.array_str(data_slice[1]))
             outfile.write('\n')
             i+=1
