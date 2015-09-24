@@ -18,7 +18,8 @@ sns.set_context('notebook')
 sns.set_style('ticks')
 plt.ioff()
 
-def analysisNMF(data_to_analyze,dirnumber,directory,stimparam,numcomp=18,min_radius=3,max_radius=7,radius=4,raw_data=img):
+def analysisNMF(data_to_analyze,dirnumber,directory,stimparam,numcomp=18,min_radius=3,max_radius=7,radius=4):
+    global model
     selem = disk(radius)  
     fig = figure(dpi=300)
     model = NMF(k=numcomp, maxIter=100).fit(data_to_analyze)
@@ -39,12 +40,12 @@ def analysisNMF(data_to_analyze,dirnumber,directory,stimparam,numcomp=18,min_rad
     lst = np.asarray(list(itertools.product([0, 1], repeat=stimparam.shape[0])))
     NMFH=np.transpose(model.h.T)    
     results=[]
-    corrMat=np.zeros((shape(NMFH)[0],data_to_analyze.dims[0],data_to_analyze.dims[1]),dtype=np.float64)
+    corrMat=np.zeros((shape(NMFH)[0],data_to_analyze.dims[0],data_to_analyze.dims[1]),dtype=np.float32)
     for k in range(0,shape(NMFH)[0]):
         result=[]
         ccr=[]
         for j in range(1,shape(lst)[0]):
-            combination=np.zeros((1,data_to_analyze.index.shape[0]),dtype=np.int);
+            combination=np.zeros((1,data_to_analyze.index.shape[0]),dtype=np.int16);
             for i in np.transpose(np.nonzero(lst[j])[0]):
                 combination+=stimparam[i]
             cc=np.corrcoef(NMFH[k,:],combination)[0]
@@ -53,15 +54,19 @@ def analysisNMF(data_to_analyze,dirnumber,directory,stimparam,numcomp=18,min_rad
         result.append(ccr[np.argmax(ccr)])
         result.append(lst[np.argmax(ccr)])
         results.append(result)
-        combination=np.zeros((1,data_to_analyze.index.shape[0]),dtype=np.int);
+        combination=np.zeros((1,data_to_analyze.index.shape[0]),dtype=np.int16);
         for i in np.transpose(np.nonzero(lst[np.argmax(ccr)])[0]):
             combination+=aud8freq[i]  
         corrs = data_to_analyze.correlate(combination)
         corrMat[k] = corrs.pack()
         opened = opening(imgs[k], selem)
         blobs_log = feature.blob_log(opened, min_sigma=min_radius, max_sigma=max_radius)
+#         if not blobs_log:
+#             with open('/mnt/downloads/'+directory+'/image-'+str(dirnumber)+'NMF-'+str(k)+'segmentation.csv', 'a') as outfile:
+#                 print('No cells found')
+#         else:
         blobs_log[:, 2] = blobs_log[:, 2] * sqrt(2)
-        Mask=np.zeros((imgs[k].shape[0],imgs[k].shape[1]),dtype=np.int)
+        Mask=np.zeros((imgs[k].shape[0],imgs[k].shape[1]),dtype=np.int16)
         i=1
         for blob in blobs_log:
             y, x, r = blob
@@ -73,9 +78,9 @@ def analysisNMF(data_to_analyze,dirnumber,directory,stimparam,numcomp=18,min_rad
         plt.imshow(Mask)
         plt.savefig('/mnt/downloads/'+directory+'/image-'+str(dirnumber)+'NMF-'+str(k)+'segmentation.png', dpi=300, bbox_inches='tight')
         propthund=img.meanByRegions(Mask).collectAsArray()
-        np.savetxt('/mnt/downloads/'+directory+'/image-'+str(dirnumber)+'NMF-'+str(k)+'segmentation.csv',propthund[1])    
+        np.savetxt('/mnt/downloads/'+directory+'/image-'+str(dirnumber)+'NMF-'+str(k)+'segmentation.csv',propthund[1][:,0])    
 
-    with open('/mnt/downloads/temp/NMFCorrCoef-'+str(dirnumber)+'.txt', 'w') as outfile:
+    with open('/mnt/downloads/'+directory+'/NMFCorrCoef-'+str(dirnumber)+'.txt', 'a') as outfile:
         i=1
         for data_slice in results:
             outfile.write ('NMF-'+str(i)+' CorrCoef' + np.array_str(data_slice[0]).rjust(10) +'Combination of features'+ np.array_str(data_slice[1]))
@@ -98,7 +103,7 @@ def analysisCorr( data_to_analyze,dirnumber,directory,stimparam,numcomp=18):
       
     yplot=int(math.ceil(float(stimparam.shape[0])/(math.trunc(stimparam.shape[0]**(0.5)))))
     xplot=math.trunc(stimparam.shape[0]**(0.5))  
-    corrMat=np.zeros((stimparam.shape[0],data_to_analyze.dims[0],data_to_analyze.dims[1]),dtype=np.float64)
+    corrMat=np.zeros((stimparam.shape[0],data_to_analyze.dims[0],data_to_analyze.dims[1]),dtype=np.float32)
     fig = figure(dpi=300)
     plt.subplots(xplot, yplot, sharex=True, sharey=True)
     for j in range(0,stimparam.shape[0]):
@@ -115,8 +120,8 @@ def analysisCorr( data_to_analyze,dirnumber,directory,stimparam,numcomp=18):
 
     return
 
-def analysisPCA( data_to_analyze,dirnumber,directory,stimparam,numcomp=30,min_radius=3,max_radius=7,radius=4,raw_data=img):
-      
+def analysisPCA( data_to_analyze,dirnumber,directory,stimparam,numcomp=30,min_radius=3,max_radius=7,radius=4):
+    global model  
     fig = figure(dpi=300)
     model = PCA(k=numcomp).fit(data_to_analyze)
     j=1
@@ -135,12 +140,12 @@ def analysisPCA( data_to_analyze,dirnumber,directory,stimparam,numcomp=30,min_ra
     lst = np.asarray(list(itertools.product([0, 1], repeat=stimparam.shape[0])))
     PCAcomps=np.transpose(model.comps.T)    
     results=[]
-    corrMat=np.zeros((shape(PCAcomps)[0],data_to_analyze.dims[0],data_to_analyze.dims[1]),dtype=np.float64)
+    corrMat=np.zeros((shape(PCAcomps)[0],data_to_analyze.dims[0],data_to_analyze.dims[1]),dtype=np.float32)
     for k in range(0,shape(PCAcomps)[0]):
         result=[]
         ccr=[]
         for j in range(1,shape(lst)[0]):
-            combination=np.zeros((1,data_to_analyze.index.shape[0]),dtype=np.int);
+            combination=np.zeros((1,data_to_analyze.index.shape[0]),dtype=np.int16);
             for i in np.transpose(np.nonzero(lst[j])[0]):
                 combination+=stimparam[i]
             cc=np.corrcoef(PCAcomps[k,:],combination)[0]
@@ -149,29 +154,33 @@ def analysisPCA( data_to_analyze,dirnumber,directory,stimparam,numcomp=30,min_ra
         result.append(ccr[np.argmax(ccr)])
         result.append(lst[np.argmax(ccr)])
         results.append(result)
-        combination=np.zeros((1,data_to_analyze.index.shape[0]),dtype=np.int);
+        combination=np.zeros((1,data_to_analyze.index.shape[0]),dtype=np.int16);
         for i in np.transpose(np.nonzero(lst[np.argmax(ccr)])[0]):
             combination+=aud8freq[i]  
         corrs = data_to_analyze.correlate(combination)
         corrMat[k] = corrs.pack()
         opened = opening(imgs[k], selem)
         blobs_log = feature.blob_log(opened, min_sigma=min_radius, max_sigma=max_radius)
-        blobs_log[:, 2] = blobs_log[:, 2] * sqrt(2)
-        Mask=np.zeros((imgs[k].shape[0],imgs[k].shape[1]),dtype=np.int)
-        i=1
-        for blob in blobs_log:
-            y, x, r = blob
-            y,x = np.ogrid[-y:imgs[k].shape[0]-y, -x:imgs[k].shape[1]-x]
-            mask = x*x + y*y <= r*r
-            Mask[mask]=i
-            i+=1
-        fig = figure(dpi=300)
-        plt.imshow(Mask)
-        plt.savefig('/mnt/downloads/'+directory+'/image-'+str(dirnumber)+'PCA-'+str(k)+'segmentation.png', dpi=300, bbox_inches='tight')
-        propthund=img.meanByRegions(Mask).collectAsArray()
-        np.savetxt('/mnt/downloads/'+directory+'/image-'+str(dirnumber)+'PCA-'+str(k)+'segmentation.csv',propthund[1])   
+        if not blobs_log:
+            with open('/mnt/downloads/'+directory+'/image-'+str(dirnumber)+'PCA-'+str(k)+'segmentation.csv', 'a') as outfile:
+                print('No cells found') 
+        else:
+            blobs_log[:, 2] = blobs_log[:, 2] * sqrt(2)
+            Mask=np.zeros((imgs[k].shape[0],imgs[k].shape[1]),dtype=np.int16)
+            i=1
+            for blob in blobs_log:
+                y, x, r = blob
+                y,x = np.ogrid[-y:imgs[k].shape[0]-y, -x:imgs[k].shape[1]-x]
+                mask = x*x + y*y <= r*r
+                Mask[mask]=i
+                i+=1
+            fig = figure(dpi=300)
+            plt.imshow(Mask)
+            plt.savefig('/mnt/downloads/'+directory+'/image-'+str(dirnumber)+'PCA-'+str(k)+'segmentation.png', dpi=300, bbox_inches='tight')
+            propthund=img.meanByRegions(Mask).collectAsArray()
+            np.savetxt('/mnt/downloads/'+directory+'/image-'+str(dirnumber)+'PCA-'+str(k)+'segmentation.csv',propthund[1][:,0])   
         
-    with open('/mnt/downloads/temp/PCACorrCoef-'+str(dirnumber)+'.txt', 'w') as outfile:
+    with open('/mnt/downloads/'+directory+'/PCACorrCoef-'+str(dirnumber)+'.txt', 'a') as outfile:
         i=1
         for data_slice in results:
             outfile.write ('NMF-'+str(i)+' CorrCoef' + np.array_str(data_slice[0]).rjust(10) +'Combination of features'+ np.array_str(data_slice[1]))
