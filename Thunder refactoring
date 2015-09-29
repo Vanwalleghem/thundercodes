@@ -17,6 +17,7 @@ window = signal.gaussian(5, std=1)
 sns.set_context('notebook')
 sns.set_style('ticks')
 plt.ioff()
+    
 
 def analysisNMF(data_to_analyze,dirnumber,directory,stimparam,numcomp=18,min_radius=3,max_radius=7,radius=4):
     global model
@@ -40,11 +41,11 @@ def analysisNMF(data_to_analyze,dirnumber,directory,stimparam,numcomp=18,min_rad
     lst = np.asarray(list(itertools.product([0, 1], repeat=stimparam.shape[0])))
     NMFH=np.transpose(model.h.T)    
     results=[]
-    corrMat=np.zeros((shape(NMFH)[0],data_to_analyze.dims[0],data_to_analyze.dims[1]),dtype=np.float32)
-    for k in range(0,shape(NMFH)[0]):
+    corrMat=np.zeros((NMFH.shape[0],data_to_analyze.dims[0],data_to_analyze.dims[1]),dtype=np.float32)
+    for k in range(0,NMFH.shape[0]):
         result=[]
         ccr=[]
-        for j in range(1,shape(lst)[0]):
+        for j in range(1,lst.shape[0]):
             combination=np.zeros((1,data_to_analyze.index.shape[0]),dtype=np.int16);
             for i in np.transpose(np.nonzero(lst[j])[0]):
                 combination+=stimparam[i]
@@ -86,8 +87,8 @@ def analysisNMF(data_to_analyze,dirnumber,directory,stimparam,numcomp=18,min_rad
             outfile.write ('NMF-'+str(i)+' CorrCoef' + np.array_str(data_slice[0]).rjust(10) +'Combination of features'+ np.array_str(data_slice[1]))
             outfile.write('\n')
             i+=1        
-    yplot=int(math.ceil(float(shape(corrMat)[0])/(math.trunc(shape(corrMat)[0]**(0.5)))))
-    xplot=math.trunc(shape(corrMat)[0]**(0.5))
+    yplot=int(math.ceil(float(corrMat.shape[0])/(math.trunc(corrMat.shape[0]**(0.5)))))
+    xplot=math.trunc(corrMat.shape[0]**(0.5))
     for j in range(0,corrMat.shape[0]):
         plt.subplot(xplot, yplot, j+1);
         plt.imshow(corrMat[j], cmap='RdBu_r')
@@ -140,11 +141,11 @@ def analysisPCA( data_to_analyze,dirnumber,directory,stimparam,numcomp=30,min_ra
     lst = np.asarray(list(itertools.product([0, 1], repeat=stimparam.shape[0])))
     PCAcomps=np.transpose(model.comps.T)    
     results=[]
-    corrMat=np.zeros((shape(PCAcomps)[0],data_to_analyze.dims[0],data_to_analyze.dims[1]),dtype=np.float32)
-    for k in range(0,shape(PCAcomps)[0]):
+    corrMat=np.zeros((PCAcomps.shape[0],data_to_analyze.dims[0],data_to_analyze.dims[1]),dtype=np.float32)
+    for k in range(0,PCAcomps.shape[0]):
         result=[]
         ccr=[]
-        for j in range(1,shape(lst)[0]):
+        for j in range(1,lst.shape[0]):
             combination=np.zeros((1,data_to_analyze.index.shape[0]),dtype=np.int16);
             for i in np.transpose(np.nonzero(lst[j])[0]):
                 combination+=stimparam[i]
@@ -188,8 +189,8 @@ def analysisPCA( data_to_analyze,dirnumber,directory,stimparam,numcomp=30,min_ra
             i+=1
       
     
-    yplot=int(math.ceil(float(shape(corrMat)[0])/(math.trunc(shape(corrMat)[0]**(0.5)))))
-    xplot=math.trunc(shape(corrMat)[0]**(0.5))
+    yplot=int(math.ceil(float(corrMat.shape[0])/(math.trunc(corrMat.shape[0]**(0.5)))))
+    xplot=math.trunc(corrMat.shape[0]**(0.5))
     for j in range(0,corrMat.shape[0]):
         plt.subplot(xplot, yplot, j+1);
         plt.imshow(corrMat[j], cmap='RdBu_r')
