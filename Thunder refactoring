@@ -8,6 +8,8 @@ from matplotlib.pyplot import figure, show, axes, sci
 from matplotlib import colors
 from thunder import NMF, PCA, RegressionModel, Colorize
 import numpy as np
+from numpy import genfromtxt
+from pyfnnd import apply_all_cells
 import scipy.io
 import math
 import itertools
@@ -77,9 +79,11 @@ def analysisNMF(data_to_analyze,dirnumber,directory,stimparam,numcomp=18,min_rad
             i+=1
         fig = figure(dpi=300)
         plt.imshow(Mask)
-        plt.savefig('/mnt/downloads/'+directory+'/image-'+str(dirnumber)+'NMF-'+str(k)+'segmentation.png', dpi=300, bbox_inches='tight')
+        plt.savefig('/mnt/downloads/'+directory+'/image-'+str(dirnumber)+'-NMF-'+str(k)+'segmentation.png', dpi=300, bbox_inches='tight')
         propthund=img.meanByRegions(Mask).collectAsArray()
-        np.savetxt('/mnt/downloads/'+directory+'/image-'+str(dirnumber)+'NMF-'+str(k)+'segmentation.csv',propthund[1][:,0])    
+        n_hat, C_hat, LL, theta_hat=apply_all_cells(np.transpose(propthund[1][:,0]),disp=0, n_jobs=-1)
+        scipy.io.savemat('/mnt/downloads/'+directory+'/Spikes-NMF'+str(dirnumber)+'-'+str(k)+'.mat', mdict={'n_hat':n_hat,'C_hat':C_hat,'LL':LL,'theta_hat':theta_hat}, oned_as='column', do_compression='true')
+        np.savetxt('/mnt/downloads/'+directory+'/image-'+str(dirnumber)+'-NMF-'+str(k)+'segmentation.csv',propthund[1][:,0])    
 
     with open('/mnt/downloads/'+directory+'/NMFCorrCoef-'+str(dirnumber)+'.txt', 'a') as outfile:
         i=1
@@ -177,9 +181,11 @@ def analysisPCA( data_to_analyze,dirnumber,directory,stimparam,numcomp=30,min_ra
                 i+=1
             fig = figure(dpi=300)
             plt.imshow(Mask)
-            plt.savefig('/mnt/downloads/'+directory+'/image-'+str(dirnumber)+'PCA-'+str(k)+'segmentation.png', dpi=300, bbox_inches='tight')
+            plt.savefig('/mnt/downloads/'+directory+'/image-'+str(dirnumber)+'-PCA-'+str(k)+'segmentation.png', dpi=300, bbox_inches='tight')
             propthund=img.meanByRegions(Mask).collectAsArray()
-            np.savetxt('/mnt/downloads/'+directory+'/image-'+str(dirnumber)+'PCA-'+str(k)+'segmentation.csv',propthund[1][:,0])   
+            n_hat, C_hat, LL, theta_hat=apply_all_cells(np.transpose(propthund[1][:,0]),disp=0, n_jobs=-1)
+            scipy.io.savemat('/mnt/downloads/'+directory+'/Spikes-PCA'+str(dirnumber)+'-'+str(k)+'.mat', mdict={'n_hat':n_hat,'C_hat':C_hat,'LL':LL,'theta_hat':theta_hat}, oned_as='column', do_compression='true')
+            np.savetxt('/mnt/downloads/'+directory+'/image-'+str(dirnumber)+'-PCA-'+str(k)+'segmentation.csv',propthund[1][:,0])   
         
     with open('/mnt/downloads/'+directory+'/PCACorrCoef-'+str(dirnumber)+'.txt', 'a') as outfile:
         i=1
