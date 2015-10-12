@@ -60,7 +60,7 @@ def analysisNMF(data_to_analyze,dirnumber,directory,stimparam,numcomp=18,min_rad
         results.append(result)
         combination=np.zeros((1,data_to_analyze.index.shape[0]),dtype=np.int16);
         for i in np.transpose(np.nonzero(lst[np.argmax(ccr)])[0]):
-            combination+=aud8freq[i]  
+            combination+=stimparam[i]  
         corrs = data_to_analyze.correlate(combination)
         corrMat[k] = corrs.pack()
         opened = opening(imgs[k], selem)
@@ -162,7 +162,7 @@ def analysisPCA( data_to_analyze,dirnumber,directory,stimparam,numcomp=30,min_ra
         results.append(result)
         combination=np.zeros((1,data_to_analyze.index.shape[0]),dtype=np.int16);
         for i in np.transpose(np.nonzero(lst[np.argmax(ccr)])[0]):
-            combination+=aud8freq[i]  
+            combination+=stimparam[i]  
         corrs = data_to_analyze.correlate(combination)
         corrMat[k] = corrs.pack()
         opened = opening(imgs[k], selem)
