@@ -32,7 +32,7 @@ def Spikeinference(img,Mask):
     np.savetxt('/mnt/downloads/'+savedirectory+'/'+filename+'-segmentation-ROI_Raw.csv',MeanFluo_ROI[1][:,0])
     return n_hat, C_hat, LL, theta_hat
 
-def NMFCorr(stimparam,NMFH,data_to_analyze=data_to_analyze,p_value=0.05):
+def NMFCorr(stimparam,NMFH,data_to_analyze,p_value=0.05):
     results=[]
     lst = np.asarray(list(itertools.product([0, 1], repeat=stimparam.shape[0])))
     corrMat=np.zeros((Mask.shape[0],Mask.shape[1]),dtype=np.float32)
@@ -44,7 +44,7 @@ def NMFCorr(stimparam,NMFH,data_to_analyze=data_to_analyze,p_value=0.05):
             combination=np.zeros((1,NMFH.shape[1]),dtype=np.int16);
             for i in np.transpose(np.nonzero(lst[j])[0]):
                 combination+=stimparam[i]
-            cc=pearsonr(NMFH[k,:],combination)
+            cc,pval=pearsonr(NMFH[k,:],combination[0])
             ccr.append(cc)
             pvalues.append(pval)
         result.append(ccr[np.argmin(pvalues)])
@@ -54,26 +54,29 @@ def NMFCorr(stimparam,NMFH,data_to_analyze=data_to_analyze,p_value=0.05):
         combination=np.zeros((1,NMFH.shape[1]),dtype=np.int16);
         if pvalues[np.argmin(pvalues)]<p_value:
             for i in np.transpose(np.nonzero(lst[np.argmin(pvalues)])[0]):
-                combination+=stimparam[i]  
-            corrs = data_to_analyze.correlate(combination)
-            corrMat = corrs.collectValuesAsArray()
-            Masktemp=Mask.copy()
-            for idx in xrange(0,corrMat.shape[0]):
-                Masktemp[Masktemp==idx]=corrMat[idx]
-            fig = figure(dpi=300)
-            plt.imshow(Masktemp)
-            plt.savefig('/mnt/downloads/'+savedirectory+'/'+filename+'-Correlation of significant NMF-'+str(k)+' combination.png', dpi=300, bbox_inches='tight')
-            scipy.io.savemat('/mnt/downloads/'+savedirectory+'/'+filename+'-Correlation of significant NMF-'+str(k)+'.mat', mdict={'correlations':corrMat}, oned_as='column', do_compression='true')
-    with open('/mnt/downloads/'+savedirectory+'/'+filename+'-NMF_Spikes_CorrCoef.txt', 'a') as outfile:
+                combination+=stimparam[i]
+            if np.any(combination):
+                corrs = data_to_analyze.correlate(combination)
+                corrMat = corrs.collectValuesAsArray()
+                Masktemp=Mask.astype(np.float32).copy()
+                for idx in xrange(0,corrMat.shape[0]):
+                    Masktemp[Masktemp==idx+1]=corrMat[idx]
+                fig = figure(dpi=300)
+                plt.imshow(Masktemp)
+                plt.savefig('/mnt/downloads/'+savedirectory+'/'+filename+'-Correlation of significant NMF-'+str(k)+' combination.png', dpi=300, bbox_inches='tight')
+                scipy.io.savemat('/mnt/downloads/'+savedirectory+'/'+filename+'-Correlation of significant NMF-'+str(k)+'.mat', mdict={'correlations':corrMat}, oned_as='column', do_compression='true')
+                plt.close("all")
+    with open('/mnt/downloads/'+savedirectory+'/'+filename+'-NMF_Spikes_CorrCoef.txt', 'w') as outfile:
         i=0
         for data_slice in results:
-            outfile.write ('NMF-'+str(i)+' CorrCoef' + np.array_str(data_slice[0]).rjust(10)+'p-value'+ np.array_str(data_slice[1]) +'Combination of features'+ np.array_str(data_slice[2]))
+            outfile.write ('NMF-'+str(i)+' CorrCoef : ' + np.array_str(data_slice[0]).rjust(10)+'p-value : '+ np.array_str(data_slice[1]) +'Combination of features : '+ np.array_str(data_slice[2]))
             outfile.write('\n')
             i+=1
     return
 
 def NMF_spikes(n_hat,stimparam,numcomp=18):
     global data_to_analyze
+    global model
     np.save('/mnt/downloads/'+directory+'/nhatFullData.npy',n_hat)
     data_to_analyze=tsc.loadSeries('/mnt/downloads/'+directory+'/nhatFullData.npy', inputFormat='npy', minPartitions=300)
     model = NMF(k=numcomp, maxIter=100,tol=0.0001,reconHist='final').fit(data_to_analyze)
@@ -81,9 +84,9 @@ def NMF_spikes(n_hat,stimparam,numcomp=18):
     scipy.io.savemat('/mnt/downloads/'+savedirectory+'/'+filename+'-NMF_Spikes.mat', mdict={'W':imgs[1],'H':model.h.T,'ReconErr':model.reconErr}, oned_as='column', do_compression='true')
     scores=[]
     for i in xrange(0,imgs[1].shape[1]):
-        Masktemp=Mask.copy()
+        Masktemp=Mask.astype(np.float32).copy()
         for idx in xrange(0,imgs[1].shape[0]):
-            Masktemp[Masktemp==idx]=imgs[1][idx][i]
+            Masktemp[Masktemp==idx+1]=imgs[1][idx][i]
         scores.append(Masktemp)
     for i in xrange(0,model.h.T.shape[1]):
         fig = figure(dpi=300)
@@ -93,6 +96,31 @@ def NMF_spikes(n_hat,stimparam,numcomp=18):
         plt.subplot(1, 2, 2);
         plt.imshow(scores[i])
         plt.savefig('/mnt/downloads/'+savedirectory+'/'+filename+'-NMF-Spikes-'+str(i)+'.png', dpi=300, bbox_inches='tight')
-    NMFCorr(stimparam,np.transpose(model.h.T))
+        plt.close("all")
+    NMFCorr(stimparam,np.transpose(model.h.T),data_to_analyze)
     return model
+    
+    
+directory='Tonotropy'
+savedirectory='TonotropyResults'
+os.chdir('/mnt/downloads/'+directory+'/')
+p=Popen(['ls'], shell=False, stdout=PIPE, close_fds=True).stdout.readlines()
+filelist=[]
+for filename in p:
+    if filename.startswith('GC'):
+        filelist.append(filename.rstrip('\n'))
+for i,filename in enumerate(filelist):
+    if i==1:
+        img = tsc.loadImages('/mnt/downloads/'+directory+'/'+str(i+1)+'/', inputFormat='tif')
+        Mask = PIL.Image.open('/mnt/downloads/'+directory+'/Mask_'+filename)
+        Mask=np.asarray(Mask,dtype=np.uint16)
+        n_hat, C_hat, LL, theta_hat = Spikeinference(img,Mask)
+        model=NMF_spikes(n_hat,aud8freq)
+        results = RegressionModel.load(aud8freq, 'linear').fit(data_to_analyze)
+        betas=results.select('betas').collectValuesAsArray()
+        rsq=results.select('stats').collectValuesAsArray()
+        scipy.io.savemat('/mnt/downloads/'+savedirectory+'/'+filename+'-linreg.mat', mdict={'betas':betas,'rsq':rsq}, oned_as='column', do_compression='true')
+        plt.close("all")
+    
+        
 
